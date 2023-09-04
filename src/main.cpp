@@ -4,6 +4,14 @@
 #include <AsyncWebSocket.h>
 #include "SPIFFS.h"
 #include <ArduinoJson.h>
+#include <SoftwareSerial.h>
+#include <Adafruit_Thermal.h>
+
+#define TX_PIN 22 // Arduino transmit  BLUE WIRE  labeled RX on printer
+#define RX_PIN 23 // Arduino receive   GREEN WIRE   labeled TX on printer
+
+SoftwareSerial mySerial(RX_PIN, TX_PIN);
+Adafruit_Thermal printer(&mySerial);
 
 const char *ssid = "NOS-8146";
 const char *password = "W36FPH29";
@@ -11,7 +19,8 @@ const char *password = "W36FPH29";
 AsyncWebServer server(80);
 AsyncWebSocket ws("/ws");
 
-String formatTime(time_t timestamp) {
+String formatTime(time_t timestamp)
+{
   struct tm timeinfo;
   gmtime_r(&timestamp, &timeinfo);
   char buffer[64];
@@ -19,14 +28,16 @@ String formatTime(time_t timestamp) {
   return String(buffer);
 }
 
-String getSPIFFSDirectory() {
+String getSPIFFSDirectory()
+{
   DynamicJsonDocument doc(1024);
   JsonArray filesArray = doc.createNestedArray("files");
 
   File root = SPIFFS.open("/");
   File file = root.openNextFile();
 
-  while (file) {
+  while (file)
+  {
     JsonObject fileObject = filesArray.createNestedObject();
     fileObject["filename"] = file.name();
     fileObject["size"] = file.size();
@@ -41,51 +52,87 @@ String getSPIFFSDirectory() {
   return jsonString;
 }
 
-void parseAndPrintJson(const uint8_t *data, size_t len) {
+void parseAndPrintJson(JsonObject &jsonObject)
+{
   Serial.println("heyo");
-  
-  DynamicJsonDocument jsonDocument(1024);
-  DeserializationError error = deserializeJson(jsonDocument, data, len);
 
-  if (error) {
-    Serial.print("JSON parsing error: ");
-    Serial.println(error.c_str());
-    return;
-  }
+  String text = jsonObject["text"].as<String>();
+  bool bold = jsonObject["bold"].as<bool>();
+  bool doubleHeight = jsonObject["doubleHeight"].as<bool>();
+  bool doubleWidth = jsonObject["doubleWidth"].as<bool>();
+  bool inverted = jsonObject["inverted"].as<bool>();
 
-  String text = jsonDocument["text"].as<String>();
-  bool bold = jsonDocument["bold"].as<bool>();
-  bool doubleHeight = jsonDocument["doubleHeight"].as<bool>();
-  bool doubleWidth = jsonDocument["doubleWidth"].as<bool>();
-  String justify = jsonDocument["justify"].as<String>();
-  String font = jsonDocument["font"].as<String>();
-  int charSpacing = jsonDocument["charSpacing"].as<int>();
+  String justify = jsonObject["justify"].as<String>();
+  String font = jsonObject["font"].as<String>();
+
+  int charSpacing = jsonObject["charSpacing"].as<int>();
+  int linesAbove = jsonObject["linesAbove"].as<int>();
+  int linesBelow = jsonObject["linesBelow"].as<int>();
 
   // Print the parsed JSON values to the Serial monitor
   Serial.println("Parsed JSON:");
-  Serial.println("Text: " + text);
   Serial.println("Bold: " + String(bold));
   Serial.println("Double Height: " + String(doubleHeight));
   Serial.println("Double Width: " + String(doubleWidth));
-  Serial.println("Justify: " + justify);
+  Serial.println("Inverted: " + String(doubleWidth));
+  Serial.println("Justify: " + String(justify));
   Serial.println("Font: " + font);
   Serial.println("Character Spacing: " + String(charSpacing));
+  Serial.println("Character Spacing: " + String(linesAbove));
+  Serial.println("Character Spacing: " + String(linesAbove));
+
+  Serial.println("Text: " + text);
+
+  printer.setFont(font[0]);
+  printer.justify(justify[0]);
+  printer.setCharSpacing(charSpacing);
+
+  if (bold)
+    printer.boldOn();
+  else
+    printer.boldOff();
+
+  if (doubleWidth)
+    printer.doubleWidthOn();
+  else
+    printer.doubleWidthOff();
+
+  if (doubleHeight)
+    printer.doubleHeightOn();
+  else
+    printer.doubleHeightOff();
+
+  if (inverted)
+    printer.inverseOn();
+  else
+    printer.inverseOff();
+
+  printer.feed(linesAbove);
+
+  printer.println(text);
+
+  printer.feed(linesBelow);
 }
 
-void setup() {
+void setup()
+{
   Serial.begin(115200);
+  mySerial.begin(9600);
+  printer.begin();
+
   WiFi.begin(ssid, password);
-  while (WiFi.status() != WL_CONNECTED) {
+  while (WiFi.status() != WL_CONNECTED)
+  {
     delay(1000);
   }
   Serial.print("IP Address: ");
   Serial.println(WiFi.localIP());
 
-  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
-    request->send(SPIFFS, "/index.html", "text/html");
-  });
+  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
+            { request->send(SPIFFS, "/index.html", "text/html"); });
 
-  ws.onEvent([](AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len) {
+  ws.onEvent([](AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len)
+             {
     if (type == WS_EVT_CONNECT) {
       Serial.println("WebSocket client connected");
     } else if (type == WS_EVT_DISCONNECT) {
@@ -109,19 +156,18 @@ void setup() {
         client->text(fileList);
       }
 
+
       if (jsonObject.containsKey("text")) {
-        parseAndPrintJson(data, len);
+        parseAndPrintJson(jsonObject);
       }
-
-
             
 
-    }
-  });
+    } });
 
   server.addHandler(&ws);
 
-  if (!SPIFFS.begin(true)) {
+  if (!SPIFFS.begin(true))
+  {
     Serial.println("An error occurred while mounting SPIFFS");
     return;
   }
