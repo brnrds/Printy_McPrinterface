@@ -19,16 +19,14 @@ String formatTime(time_t timestamp) {
   return String(buffer);
 }
 
-String getSPIFFSDirectory()
-{
+String getSPIFFSDirectory() {
   DynamicJsonDocument doc(1024);
   JsonArray filesArray = doc.createNestedArray("files");
 
   File root = SPIFFS.open("/");
   File file = root.openNextFile();
 
-  while (file)
-  {
+  while (file) {
     JsonObject fileObject = filesArray.createNestedObject();
     fileObject["filename"] = file.name();
     fileObject["size"] = file.size();
@@ -43,28 +41,57 @@ String getSPIFFSDirectory()
   return jsonString;
 }
 
-void setup()
-{
+void parseAndPrintJson(const uint8_t *data, size_t len) {
+  Serial.println("heyo");
+  DynamicJsonDocument jsonDocument(1024);
+  DeserializationError error = deserializeJson(jsonDocument, data, len);
+
+  if (error) {
+    Serial.print("JSON parsing error: ");
+    Serial.println(error.c_str());
+    return;
+  }
+
+  String text = jsonDocument["text"].as<String>();
+  bool bold = jsonDocument["bold"].as<bool>();
+  bool doubleHeight = jsonDocument["doubleHeight"].as<bool>();
+  bool doubleWidth = jsonDocument["doubleWidth"].as<bool>();
+  String justify = jsonDocument["justify"].as<String>();
+  String font = jsonDocument["font"].as<String>();
+  int charSpacing = jsonDocument["charSpacing"].as<int>();
+
+  // Print the parsed JSON values to the Serial monitor
+  Serial.println("Parsed JSON:");
+  Serial.println("Text: " + text);
+  Serial.println("Bold: " + String(bold));
+  Serial.println("Double Height: " + String(doubleHeight));
+  Serial.println("Double Width: " + String(doubleWidth));
+  Serial.println("Justify: " + justify);
+  Serial.println("Font: " + font);
+  Serial.println("Character Spacing: " + String(charSpacing));
+}
+
+void setup() {
   Serial.begin(115200);
   WiFi.begin(ssid, password);
-  while (WiFi.status() != WL_CONNECTED)
-  {
+  while (WiFi.status() != WL_CONNECTED) {
     delay(1000);
   }
   Serial.print("IP Address: ");
   Serial.println(WiFi.localIP());
 
-  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
-            { request->send(SPIFFS, "/index.html", "text/html"); });
+  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
+    request->send(SPIFFS, "/index.html", "text/html");
+  });
 
-  ws.onEvent([](AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len)
-             {
+  ws.onEvent([](AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len) {
     if (type == WS_EVT_CONNECT) {
       Serial.println("WebSocket client connected");
     } else if (type == WS_EVT_DISCONNECT) {
       Serial.println("WebSocket client disconnected");
     } else if (type == WS_EVT_DATA) {
       Serial.println("WebSocket message received");
+
       DynamicJsonDocument jsonDocument(1024);
       DeserializationError error = deserializeJson(jsonDocument, data, len);
 
@@ -75,17 +102,25 @@ void setup()
       }
 
       JsonObject jsonObject = jsonDocument.as<JsonObject>();
-      
+
       if (jsonObject.containsKey("listFiles") && jsonObject["listFiles"].as<bool>() == true) {
         String fileList = getSPIFFSDirectory();
         client->text(fileList);
       }
-    } });
+
+      if (jsonObject.containsKey("Text")) {
+        parseAndPrintJson(data, len);
+      }
+
+
+            
+
+    }
+  });
 
   server.addHandler(&ws);
 
-  if (!SPIFFS.begin(true))
-  {
+  if (!SPIFFS.begin(true)) {
     Serial.println("An error occurred while mounting SPIFFS");
     return;
   }

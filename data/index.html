@@ -8,8 +8,39 @@
 </head>
 
 <body>
-    <h1>WebSocket Example</h1>
+    <h1>Printy McPrinterface</h1>
 
+    <label for="text">Text Content:</label>
+    <input type="text" id="text" placeholder="Enter text here"><br><br>
+
+    <label for="bold">Bold:</label>
+    <input type="checkbox" id="bold"><br><br>
+
+    <label for="doubleHeight">Double Height:</label>
+    <input type="checkbox" id="doubleHeight"><br><br>
+
+    <label for="doubleWidth">Double Width:</label>
+    <input type="checkbox" id="doubleWidth"><br><br>
+
+    <label for="justify">Justify:</label>
+    <select id="justify">
+        <option value="left">Left</option>
+        <option value="center">Center</option>
+        <option value="right">Right</option>
+    </select><br><br>
+
+    <label for="font">Font:</label>
+    <select id="font">
+        <option value="A">Font A</option>
+        <option value="B">Font B</option>
+    </select><br><br>
+
+    <label for="charSpacing">Character Spacing:</label>
+    <input type="number" id="charSpacing"><br><br>
+
+    <!-- Add input fields and selects for other properties similarly -->
+
+    <button onclick="updateSettings()">Apply Settings</button>
     <script>
         // Create a WebSocket connection to the server
         const socket = new WebSocket('ws://' + window.location.host + '/ws');
@@ -40,6 +71,26 @@
         socket.onerror = function(error) {
             console.error('WebSocket error:', error);
         };
+
+        function updateSettings() {
+            const settings = {
+                text: document.getElementById('text').value,
+                bold: document.getElementById('bold').checked,
+                doubleHeight: document.getElementById('doubleHeight').checked,
+                doubleWidth: document.getElementById('doubleWidth').checked,
+                justify: document.getElementById('justify').value,
+                font: document.getElementById('font').value,
+                charSpacing: parseInt(document.getElementById('charSpacing').value),
+                // Add code to collect values for other properties
+            };
+
+            // Send the settings to your Arduino or server for processing
+            // You may need to use AJAX or WebSocket to send the settings
+
+            // For testing, you can log the settings to the console
+            // console.log(settings);
+            socket.send(JSON.stringify(settings));
+        }
     </script>
 </body>
 
