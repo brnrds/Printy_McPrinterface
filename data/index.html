@@ -5,42 +5,66 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WebSocket Example</title>
+    <!-- Include Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-4bw+/aepP/YC94hEpVNVgiZdgIC5+VKNBQNGCHeKRQN+PtmoHDEXuppvnDJzQIu9" crossorigin="anonymous">
+
 </head>
 
 <body>
-    <h1>Printy McPrinterface</h1>
+    <div class="container mt-5">
+        <h1>Printy McPrinterface</h1>
+        <form>
+            <div class="mb-3">
+                <label for="text" class="form-label">Text Content:</label>
+                <input type="text" class="form-control" id="text" placeholder="Enter text here">
+            </div>
 
-    <label for="text">Text Content:</label>
-    <input type="text" id="text" placeholder="Enter text here"><br><br>
+            <div class="form-check mb-3">
+                <input type="checkbox" class="form-check-input" id="bold">
+                <label class="form-check-label" for="bold">Bold</label>
+            </div>
 
-    <label for="bold">Bold:</label>
-    <input type="checkbox" id="bold"><br><br>
+            <div class="form-check mb-3">
+                <input type="checkbox" class="form-check-input" id="doubleHeight">
+                <label class="form-check-label" for="doubleHeight">Double Height</label>
+            </div>
 
-    <label for="doubleHeight">Double Height:</label>
-    <input type="checkbox" id="doubleHeight"><br><br>
+            <div class="form-check mb-3">
+                <input type="checkbox" class="form-check-input" id="doubleWidth">
+                <label class="form-check-label" for="doubleWidth">Double Width</label>
+            </div>
 
-    <label for="doubleWidth">Double Width:</label>
-    <input type="checkbox" id="doubleWidth"><br><br>
+            <div class="mb-3">
+                <label for="justify" class="form-label">Justify:</label>
+                <select class="form-select" id="justify">
+                    <option value="left">Left</option>
+                    <option value="center">Center</option>
+                    <option value="right">Right</option>
+                </select>
+            </div>
 
-    <label for="justify">Justify:</label>
-    <select id="justify">
-        <option value="left">Left</option>
-        <option value="center">Center</option>
-        <option value="right">Right</option>
-    </select><br><br>
+            <div class="mb-3">
+                <label for="font" class="form-label">Font:</label>
+                <select class="form-select" id="font">
+                    <option value="A">Font A</option>
+                    <option value="B">Font B</option>
+                </select>
+            </div>
 
-    <label for="font">Font:</label>
-    <select id="font">
-        <option value="A">Font A</option>
-        <option value="B">Font B</option>
-    </select><br><br>
+            <div class="mb-3">
+                <label for="charSpacing" class="form-label">Character Spacing:</label>
+                <input type="number" class="form-control" id="charSpacing">
+            </div>
 
-    <label for="charSpacing">Character Spacing:</label>
-    <input type="number" id="charSpacing"><br><br>
+            <!-- Add input fields and selects for other properties similarly -->
 
-    <!-- Add input fields and selects for other properties similarly -->
+            <button type="button" class="btn btn-primary" onclick="updateSettings()">Apply Settings</button>
+        </form>
+    </div>
 
-    <button onclick="updateSettings()">Apply Settings</button>
+    <!-- Include Bootstrap JS and Popper.js (required for Bootstrap) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-HwwvtgBNo3bZJJLYd8oVXjrBZt8cqVSpeBNS5n7C8IVInixGAoxmnlMuBnhbgrkm" crossorigin="anonymous"></script>
+
     <script>
         // Create a WebSocket connection to the server
         const socket = new WebSocket('ws://' + window.location.host + '/ws');

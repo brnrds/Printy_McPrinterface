@@ -43,6 +43,7 @@ String getSPIFFSDirectory() {
 
 void parseAndPrintJson(const uint8_t *data, size_t len) {
   Serial.println("heyo");
+  
   DynamicJsonDocument jsonDocument(1024);
   DeserializationError error = deserializeJson(jsonDocument, data, len);
 
@@ -108,7 +109,7 @@ void setup() {
         client->text(fileList);
       }
 
-      if (jsonObject.containsKey("Text")) {
+      if (jsonObject.containsKey("text")) {
         parseAndPrintJson(data, len);
       }
 
